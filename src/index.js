@@ -1,6 +1,7 @@
 
 import Promise from 'bluebird';
 import nodemailer from 'nodemailer';
+import Pushbullet from 'pushbullet';
 import request from 'request';
 import cheerio from 'cheerio';
 import chalk from 'chalk';
@@ -27,7 +28,8 @@ export class WebWatcher {
     delay: 5000,
     from: 'webwatcher@mgcrea.io',
     to: null,
-    smtp: null
+    smtp: null,
+    message: 'WebWatch detected a change in the watched site.'
   }
 
   constructor(options = {}) {
@@ -192,6 +194,20 @@ export class WebWatcher {
     });
   }
 
+  sendPushbullet() {
+    const {pushbullet, message} = this.config;
+    if (!pushbullet) {
+      return Promise.resolve();
+    }
+
+    const pusher = new Pushbullet(pushbullet);
+    const sendNote = Promise.promisify(pusher.note);
+
+    return sendNote({}, 'WebWatch change detected', message)
+      .then(() => log.info('Push notification sent.'))
+      .catch(e => log.warn(`Error [${e}] occurred while sending push notification.`));
+  }
+
   run() {
     const {phantomjs} = this.config;
     return Promise.bind(this)
@@ -203,6 +219,7 @@ export class WebWatcher {
         if (changed) {
           log.warn(`Watched content changed!\n${chalk.grey(JSON.stringify(changed, null, 2))}`);
           this.sendEmail();
+          this.sendPushbullet();
         }
       })
       .catch((err) => {

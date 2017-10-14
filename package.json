@@ -29,6 +29,7 @@
     "node-diff": "^0.2.0",
     "nodemailer": "^2.6.4",
     "phantom": "^2.1.21",
+    "pushbullet": "^2.1.0",
     "request": "^2.75.0",
     "yargs": "^6.2.0"
   },

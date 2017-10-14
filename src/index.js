@@ -201,7 +201,7 @@ export class WebWatcher {
     }
 
     const pusher = new Pushbullet(pushbullet);
-    const sendNote = Promise.promisify(pusher.note);
+    const sendNote = Promise.promisify(pusher.note, {context: pusher});
 
     return sendNote({}, 'WebWatch change detected', message)
       .then(() => log.info('Push notification sent.'))

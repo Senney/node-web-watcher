@@ -194,6 +194,27 @@ export class WebWatcher {
     });
   }
 
+  getHistoryText() {
+    const lastHistory = last(this.history);
+    if (lastHistory !== null && Array.isArray(lastHistory.diff) && lastHistory.diff.length !== 0) {
+      return lastHistory.diff.map((history) => {
+        if (history.count && history.count > 1000) {
+          return 'Change set too large to display';
+        }
+
+        let indicator = '?';
+        if (history.added) {
+          indicator = '+';
+        } else if (history.removed) {
+          indicator = '-';
+        }
+
+        return `${indicator} ${history.value}`;
+      });
+    }
+    return '';
+  }
+
   sendPushbullet() {
     const {pushbullet, message} = this.config;
     if (!pushbullet) {
@@ -203,7 +224,8 @@ export class WebWatcher {
     const pusher = new Pushbullet(pushbullet);
     const sendNote = Promise.promisify(pusher.note, {context: pusher});
 
-    return sendNote({}, 'WebWatch change detected', message)
+    const historyText = this.getHistoryText();
+    return sendNote({}, 'WebWatch change detected', `${message}\n\n${historyText}`)
       .then(() => log.info('Push notification sent.'))
       .catch(e => log.warn(`Error [${e}] occurred while sending push notification.`));
   }
